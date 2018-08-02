@@ -1,0 +1,19 @@
+texture.png
+size: 196, 131
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+ball
+  rotate: false
+  xy: 1, 1
+  size: 128, 129
+  orig: 128, 129
+  offset: 0, 0
+  index: -1
+touch_circle
+  rotate: false
+  xy: 131, 1
+  size: 64, 64
+  orig: 64, 64
+  offset: 0, 0
+  index: -1
