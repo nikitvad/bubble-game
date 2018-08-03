@@ -1,5 +1,5 @@
 texture.png
-size: 196, 131
+size: 326, 131
 format: RGBA8888
 filter: Linear,Linear
 repeat: none
@@ -10,9 +10,16 @@ ball
   orig: 128, 129
   offset: 0, 0
   index: -1
-touch_circle
+bubble
   rotate: false
   xy: 131, 1
+  size: 128, 128
+  orig: 128, 128
+  offset: 0, 0
+  index: -1
+touch_circle
+  rotate: false
+  xy: 261, 1
   size: 64, 64
   orig: 64, 64
   offset: 0, 0

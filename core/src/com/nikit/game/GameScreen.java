@@ -1,12 +1,15 @@
 package com.nikit.game;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.Box2D;
@@ -21,6 +24,8 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.codeandweb.physicseditor.PhysicsShapeCache;
+
+import java.util.ArrayList;
 
 import static com.nikit.game.Constants.*;
 
@@ -38,7 +43,10 @@ public class GameScreen implements Screen {
 
     Ball ball1;
 
+    Line line;
+
     Box2DDebugRenderer debugRenderer;
+    private ArrayList<Enemy> enemies = new ArrayList<Enemy>();
 
 
     public GameScreen(BubbleGame game) {
@@ -55,7 +63,23 @@ public class GameScreen implements Screen {
 
         debugRenderer = new Box2DDebugRenderer();
         debugRenderer.setDrawBodies(true);
+        Gdx.input.setInputProcessor(inputProcessor);
 
+        ball1 = new Ball(textureAtlas, physicsShapeCache, world, SPRITE_SCALE, new Vector2(10, 10));
+        ball1.body.setFixedRotation(false);
+
+
+
+        line = new Line();
+
+    }
+
+    private EnemyFactory createEnemyFactory() {
+        EnemyFactory enemyFactory = new EnemyFactory(textureAtlas, physicsShapeCache, SPRITE_SCALE, world);
+        enemyFactory.xPosRange = camera.viewportWidth - 10;
+        enemyFactory.yPosRange= camera.viewportHeight - 10;
+
+        return enemyFactory;
     }
 
 
@@ -64,6 +88,8 @@ public class GameScreen implements Screen {
 
     }
 
+    ShapeRenderer shapeRenderer = new ShapeRenderer();
+
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(1, 1, 1, 1);
@@ -71,26 +97,57 @@ public class GameScreen implements Screen {
 
         game.batch.begin();
 
-
         ball1.draw(game.batch);
 
 
+//        if(enemies.size()<50){
+//
+//            enemies.add(new Enemy(textureAtlas, physicsShapeCache, world, Constants.SPRITE_SCALE, new Vector2(50, 50)));
+//        }
+
+        for(Enemy enemy: enemies){
+            enemy.draw(game.batch);
+        }
+
         game.batch.end();
 
-        debugRenderer.render(world, camera.combined);
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        line.draw(shapeRenderer);
+        shapeRenderer.end();
+
+//        debugRenderer.render(world, camera.combined);
+
         stepWorld();
 
     }
 
+    EnemyFactory enemyFactory;
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
         game.batch.setProjectionMatrix(camera.combined);
         createEdges();
+        shapeRenderer.setProjectionMatrix(camera.combined);
 
-        ball1 = new Ball(textureAtlas, physicsShapeCache, world, SPRITE_SCALE, new Vector2(55, 10));
-        ball1.body.applyLinearImpulse(new Vector2(1000, 1000), ball1.body.getWorldCenter(), true);
+
+        if(enemyFactory!=null){
+            enemyFactory.stop();
+        }
+
+        enemyFactory = createEnemyFactory();
+        enemyFactory.start(1000, new EnemyFactory.ObjectListener() {
+            @Override
+            public void onGenerated(Enemy enemy) {
+                enemies.add(enemy);
+                if(enemies.size()>20){
+                    enemyFactory.pause();
+                }
+            }
+        });
+
     }
+
 
     @Override
     public void pause() {
@@ -107,12 +164,10 @@ public class GameScreen implements Screen {
 
     }
 
+
     float accumulator = 0;
-
     static final float STEP_TIME = 1f / 60f;
-
     static final int VELOCITY_ITERATIONS = 6;
-
     static final int POSITION_ITERATIONS = 2;
 
     private void stepWorld() {
@@ -240,10 +295,80 @@ public class GameScreen implements Screen {
         }
     };
 
+    private InputProcessor inputProcessor = new InputProcessor() {
+
+        int lineBuilderPointer = -1;
+
+        @Override
+        public boolean keyDown(int keycode) {
+            return false;
+        }
+
+        @Override
+        public boolean keyUp(int keycode) {
+            return false;
+        }
+
+        @Override
+        public boolean keyTyped(char character) {
+            return false;
+        }
+
+        @Override
+        public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+            Vector3 touchPos = camera.unproject(new Vector3(screenX, screenY, 0));
+
+            if (lineBuilderPointer < 0) {
+                lineBuilderPointer = pointer;
+                line.width = 1;
+                line.setEndPos(touchPos.x, touchPos.y);
+                line.setStartPos(touchPos.x, touchPos.y +1);
+            }
+
+
+            return false;
+        }
+
+        @Override
+        public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+
+            if (pointer == lineBuilderPointer) {
+                lineBuilderPointer = -1;
+
+                Vector2 vector2 = new Vector2(line.endPos.x - line.startPos.x, line.endPos.y - line.startPos.y);
+                ball1.body.applyForceToCenter(vector2.x * 3000, vector2.y * 3000, true);
+
+                line.reset();
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean touchDragged(int screenX, int screenY, int pointer) {
+
+            Vector3 touchPos = camera.unproject(new Vector3(screenX, screenY, 0));
+            if (pointer == lineBuilderPointer) {
+                line.setEndPos(touchPos.x, touchPos.y);
+            }
+            return false;
+        }
+
+        @Override
+        public boolean mouseMoved(int screenX, int screenY) {
+            return false;
+        }
+
+        @Override
+        public boolean scrolled(int amount) {
+            return false;
+        }
+    };
 
     private void processBallEdgeContact(Body ball, Body edge, Vector2 contactNormal) {
         System.out.println(contactNormal);
-        ball.applyLinearImpulse(new Vector2(2000 * contactNormal.x, 2000 * contactNormal.y), ball.getLocalCenter(), true);
+//        Vector2 oldImpulse = ball.
+        ball.applyForceToCenter(new Vector2(1000 * contactNormal.x, 1000 * contactNormal.y), true);
     }
 
 

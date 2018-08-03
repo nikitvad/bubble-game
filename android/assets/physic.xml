@@ -9,12 +9,28 @@
 		<allow_sleep/>
 		<fixture>
 			<density>2</density>
-			<friction>0</friction>
-			<restitution>0</restitution>
+			<friction>0.2</friction>
+			<restitution>1</restitution>
 			<filter_category_bits>1</filter_category_bits>
 			<filter_mask_bits>65535</filter_mask_bits>
 			<filter_group_index>0</filter_group_index>
 			<circle x="64.706" y="63.834" r="60.623"/>
+		</fixture>
+	</body>
+
+	<body name="bubble">
+		<is_dynamic/>
+		<linear_damping>0</linear_damping>
+		<angular_damping>0</angular_damping>
+		<allow_sleep/>
+		<fixture>
+			<density>2</density>
+			<friction>0.2</friction>
+			<restitution>0</restitution>
+			<filter_category_bits>1</filter_category_bits>
+			<filter_mask_bits>65535</filter_mask_bits>
+			<filter_group_index>0</filter_group_index>
+			<circle x="64.750" y="61.500" r="52.814"/>
 		</fixture>
 	</body>
 
