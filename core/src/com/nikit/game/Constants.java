@@ -18,4 +18,15 @@ public interface Constants {
     Object OBJECT_TYPE_STICK = "object_type_stick";
 
     String[] BROKEN_STICK_SPRITE_NAMES = {"1", "2", "3", "4"};
+    float[] BROKEN_STICK_SPRITE_OFFSETS = {-66, -20, -20, 0};
+
+
+    float BALL_MASS = 1;
+    float ENEMY_MASS = 1;
+
+    float STICK_MASS = 7;
+    float[] BROKEN_STICK_MASS_SCALE = {0.15f, 0.45f, 0.25f, 0.15f};
+
+    float FORCE_SCALE = 1500;
+    String OBJECT_TYPE_STICK_FRAGMENT="object_type_stick_fragment";
 }

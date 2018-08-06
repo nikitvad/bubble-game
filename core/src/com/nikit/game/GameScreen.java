@@ -17,6 +17,7 @@ import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
+import com.badlogic.gdx.physics.box2d.DestructionListener;
 import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Manifold;
 import com.badlogic.gdx.physics.box2d.PolygonShape;
@@ -26,6 +27,8 @@ import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.codeandweb.physicseditor.PhysicsShapeCache;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.nikit.game.Constants.*;
 
@@ -45,12 +48,13 @@ public class GameScreen implements Screen {
 
     Line line;
 
-    Stick stick;
+    Set<Drawable> drawables = new HashSet<Drawable>();
 
-    BrokenStick brokenStick;
+    Set<Drawable> drawablesToCreate = new HashSet<Drawable>();
 
     Box2DDebugRenderer debugRenderer;
-    private ArrayList<Enemy> enemies = new ArrayList<Enemy>();
+
+
 
 
     public GameScreen(BubbleGame game) {
@@ -70,18 +74,16 @@ public class GameScreen implements Screen {
         Gdx.input.setInputProcessor(inputProcessor);
 
         ball1 = new Ball(textureAtlas, physicsShapeCache, world, SPRITE_SCALE, new Vector2(10, 10));
-        ball1.body.setFixedRotation(false);
 
         line = new Line();
-        stick = new Stick(textureAtlas, physicsShapeCache, world, SPRITE_SCALE, new Vector2(20, 40));
-        brokenStick = new BrokenStick(textureAtlas, physicsShapeCache, world, new Vector2(20, 20), SPRITE_SCALE, 90);
+        drawables.add(new Stick(textureAtlas, physicsShapeCache, world, SPRITE_SCALE, new Vector2(20, 40), 45));
 
     }
 
     private EnemyFactory createEnemyFactory() {
         EnemyFactory enemyFactory = new EnemyFactory(textureAtlas, physicsShapeCache, SPRITE_SCALE, world);
         enemyFactory.xPosRange = camera.viewportWidth - 10;
-        enemyFactory.yPosRange= camera.viewportHeight - 10;
+        enemyFactory.yPosRange = camera.viewportHeight - 10;
 
         return enemyFactory;
     }
@@ -99,32 +101,41 @@ public class GameScreen implements Screen {
         Gdx.gl.glClearColor(1, 1, 1, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        for(Drawable drawable: drawablesToCreate){
+            drawable.create(world);
+            drawables.add(drawable);
+        }
+        drawablesToCreate.clear();
+
         game.batch.begin();
 
         ball1.draw(game.batch);
 
-        brokenStick.draw(game.batch);
-
-        for(Enemy enemy: enemies){
-            enemy.draw(game.batch);
+        for (Drawable drawable : drawables) {
+            drawable.draw(game.batch);
         }
 
-        stick.draw(game.batch);
-
         game.batch.end();
-
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         line.draw(shapeRenderer);
         shapeRenderer.end();
 
-//        debugRenderer.render(world, camera.combined);
-
         stepWorld();
+
+        for (Drawable drawable : bodiesToRemove) {
+            for(Body b: drawable.bodies){
+                world.destroyBody(b);
+            }
+            drawables.remove(drawable);
+        }
+        bodiesToRemove.clear();
+
 
     }
 
     EnemyFactory enemyFactory;
+
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
@@ -133,7 +144,7 @@ public class GameScreen implements Screen {
         shapeRenderer.setProjectionMatrix(camera.combined);
 
 
-        if(enemyFactory!=null){
+        if (enemyFactory != null) {
             enemyFactory.stop();
         }
 
@@ -141,8 +152,8 @@ public class GameScreen implements Screen {
         enemyFactory.start(1000, new EnemyFactory.ObjectListener() {
             @Override
             public void onGenerated(Enemy enemy) {
-                enemies.add(enemy);
-                if(enemies.size()>6){
+                drawables.add(enemy);
+                if (drawables.size() > 10) {
                     enemyFactory.pause();
                 }
             }
@@ -277,12 +288,74 @@ public class GameScreen implements Screen {
         @Override
         public void preSolve(Contact contact, Manifold oldManifold) {
 
+
         }
 
         @Override
         public void postSolve(Contact contact, ContactImpulse impulse) {
+
+            Body bodyA = contact.getFixtureA().getBody();
+            Body bodyB = contact.getFixtureB().getBody();
+
+
+
+            if (bodyA.getUserData().equals(Constants.OBJECT_TYPE_BALL) || bodyB.getUserData().equals(OBJECT_TYPE_BALL)) {
+                if (bodyA.getUserData().equals(Constants.OBJECT_TYPE_STICK) || bodyB.getUserData().equals(OBJECT_TYPE_STICK)) {
+                    processBallStickContact(bodyA, bodyB);
+                }
+            }
+
+
+
         }
     };
+
+    private void processBallStickContact(Body a, Body b) {
+        if (a.getUserData().equals(OBJECT_TYPE_STICK)) {
+            Vector2 pos = a.getPosition();
+            float angle = (float) Math.toDegrees(a.getAngle());
+
+            addToRemove(findDrawableWithBody(a));
+
+            BrokenStick brokenStick = new BrokenStick(textureAtlas, physicsShapeCache, world, pos, SPRITE_SCALE, angle);
+            drawablesToCreate.add(brokenStick);
+            Vector2 velocity = b.getLinearVelocity();
+            velocity.x  = -velocity.x;
+            velocity.y = -velocity.y;
+            b.setLinearVelocity(velocity);
+        } else {
+
+            Vector2 pos = b.getPosition();
+            float angle = (float) Math.toDegrees(b.getAngle());
+            addToRemove(findDrawableWithBody(b));
+            BrokenStick brokenStick = new BrokenStick(textureAtlas, physicsShapeCache, world, pos, SPRITE_SCALE, angle);
+            drawablesToCreate.add(brokenStick);
+
+            Vector2 velocity = a.getLinearVelocity();
+            velocity.x  = -velocity.x;
+            velocity.y = -velocity.y;
+            a.setLinearVelocity(velocity);
+        }
+    }
+
+
+    private Drawable findDrawableWithBody(Body body) {
+        for (Drawable drawable : drawables) {
+            for (Body b : drawable.bodies) {
+                if (b.equals(body)) {
+                    return drawable;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    ArrayList<Drawable> bodiesToRemove = new ArrayList<Drawable>();
+
+    private void addToRemove(Drawable drawable) {
+        bodiesToRemove.add(drawable);
+    }
 
     private InputProcessor inputProcessor = new InputProcessor() {
 
@@ -311,7 +384,7 @@ public class GameScreen implements Screen {
                 lineBuilderPointer = pointer;
                 line.width = 1;
                 line.setEndPos(touchPos.x, touchPos.y);
-                line.setStartPos(touchPos.x, touchPos.y +1);
+                line.setStartPos(touchPos.x, touchPos.y + 1);
             }
 
 
@@ -325,7 +398,7 @@ public class GameScreen implements Screen {
                 lineBuilderPointer = -1;
 
                 Vector2 vector2 = new Vector2(line.endPos.x - line.startPos.x, line.endPos.y - line.startPos.y);
-                ball1.body.applyForceToCenter(vector2.x * 3000, vector2.y * 3000, true);
+                ball1.bodies[0].applyForceToCenter(vector2.x * FORCE_SCALE, vector2.y * FORCE_SCALE, true);
 
                 line.reset();
             }

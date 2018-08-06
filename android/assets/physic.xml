@@ -10,7 +10,7 @@
 		<fixture>
 			<density>2</density>
 			<friction>0</friction>
-			<restitution>1</restitution>
+			<restitution>0.8</restitution>
 			<filter_category_bits>1</filter_category_bits>
 			<filter_mask_bits>65535</filter_mask_bits>
 			<filter_group_index>0</filter_group_index>
@@ -26,7 +26,7 @@
 		<fixture>
 			<density>2</density>
 			<friction>0</friction>
-			<restitution>0</restitution>
+			<restitution>0.7</restitution>
 			<filter_category_bits>1</filter_category_bits>
 			<filter_mask_bits>65535</filter_mask_bits>
 			<filter_group_index>0</filter_group_index>
@@ -41,7 +41,7 @@
 		<allow_sleep/>
 		<fixture>
 			<density>2</density>
-			<friction>0</friction>
+			<friction>1</friction>
 			<restitution>0</restitution>
 			<filter_category_bits>1</filter_category_bits>
 			<filter_mask_bits>65535</filter_mask_bits>
@@ -57,7 +57,7 @@
 		<allow_sleep/>
 		<fixture>
 			<density>2</density>
-			<friction>0</friction>
+			<friction>1</friction>
 			<restitution>0</restitution>
 			<filter_category_bits>1</filter_category_bits>
 			<filter_mask_bits>65535</filter_mask_bits>
@@ -74,7 +74,7 @@
 		<allow_sleep/>
 		<fixture>
 			<density>2</density>
-			<friction>0</friction>
+			<friction>1</friction>
 			<restitution>0</restitution>
 			<filter_category_bits>1</filter_category_bits>
 			<filter_mask_bits>65535</filter_mask_bits>
@@ -93,7 +93,7 @@
 		<allow_sleep/>
 		<fixture>
 			<density>2</density>
-			<friction>0</friction>
+			<friction>1</friction>
 			<restitution>0</restitution>
 			<filter_category_bits>1</filter_category_bits>
 			<filter_mask_bits>65535</filter_mask_bits>
@@ -110,7 +110,7 @@
 		<allow_sleep/>
 		<fixture>
 			<density>2</density>
-			<friction>0</friction>
+			<friction>1</friction>
 			<restitution>0</restitution>
 			<filter_category_bits>1</filter_category_bits>
 			<filter_mask_bits>65535</filter_mask_bits>
